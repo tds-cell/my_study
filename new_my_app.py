@@ -12,6 +12,8 @@ from tkinter import filedialog, messagebox
 #データの処理(取得、作成、更新、削除)
 class Model():
     def __init__(self):
+        #エラー対策。拡張子の初期化
+        self.ext = None
         #動画を更新する時間
         self.delay = 5
         #動画ファイルを停止するフラグ変数
@@ -30,7 +32,53 @@ class Model():
     #動画とするためimageと名付けた
     def create_image(self, path):
         pass
-    
+
+    # 動画読み込み関数
+    def load_movie_file(self):
+        #動画を新たに読み込む場合リセットが必要
+        if self.ext != None:
+            self.scale_bar.pack_forget()
+            self.slide_num.set(1.0)
+            self.img_num = 0
+
+        self.iDir_m = os.path.abspath(
+            os.path.dirname(__file__))        
+        #これで今作業中のディレクトリ(=self.iDir)からのフォルダーダイアログを表示する
+        #さらにfiletypeを全てにしておく
+        self.filePath = filedialog.askopenfilename(
+            filetypes=self.fTyp, initialdir=self.iDir_m
+            )
+
+        #拡張子を取得
+        _, self.ext = os.path.splitext(self.filePath)
+        
+        if self.ext == ".MOV" or ".mp4":
+            #setメソッドでテキストボックスに選択したファイルのパスを入れる
+            self.file_name.set(self.filePath)
+            self.cap = cv2.VideoCapture(self.filePath)
+            #読み込んだ動画の最初の画像でサムネイルを表示
+            self.cv2ImageTk()
+            self.canvas_video.create_image( 
+                0, 0, image=self.img, anchor='nw'
+            )
+            
+            #読み込んだ動画の総フレーム数をカウント
+            self.frame_count = self.cap.get(cv2.CAP_PROP_FRAME_COUNT)
+            self.first_frame = self.frame_count / self.frame_count
+            self.scale_bar_button()
+
+        #キャンセル処理の時のエラー対策
+        elif self.filePath == "":
+            return 
+        #動画ファイルじゃない時のエラー対策
+        else :
+            messagebox.showwarning(
+                "waring",
+                "filetype is not [.mov]"
+            )
+            self.ext = None
+            
+ 
     #停止ボタン。クリック時、実行
     def stop_func(self):
         self.error_no_load()
@@ -126,7 +174,7 @@ class Control():
         self.model = model
         self.view = view
     
-        self.set_events():
+        self.set_events()
 
     def set_events(self):
         #動画ロード実行
