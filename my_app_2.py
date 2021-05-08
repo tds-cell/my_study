@@ -41,7 +41,7 @@ class Model(object):
 
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         pil_image = Image.fromarray(rgb_frame)
-
+        
         ratio_x = size[0] / pil_image.width
         ratio_y = size[1] / pil_image.height
 
@@ -49,11 +49,13 @@ class Model(object):
             ratio = ratio_x
         else:
             ratio = ratio_y
-            
+
         #リサイズ
         self.image = pil_image.resize(
-            int(ratio * pil_image.width),
-            int(ratio * pil_image.height)
+            (
+                int(ratio * pil_image.width),
+                int(ratio * pil_image.height)
+            )
         )
         
     def get_image(self):
@@ -130,6 +132,17 @@ class View(object):
             sx = (self.canvas.winfo_width() - image.width()) // 2
             sy = (self.canvas.winfo_height() - image.height()) // 2
 
+            objs = self.canvas.find_withtag("image")
+            for obj in objs:
+                self.canvas.delete(obj)
+
+            self.canvas.create_image(
+                sx, sy,
+                image=image,
+                anchor=tk.NW,
+                tag="image"
+            )
+
  
     def select_open_file(self, file_types):
         Dir = os.path.abspath(
@@ -157,19 +170,28 @@ class Controller(object):
         self.set_events()
         
     def set_events(self):
-        """
-        self.view.canvas.bind(
-            "",
-            self.button_press
-        )
-        """
+        
         self.view.load_button['command'] = self.push_load_button
+        self.view.play_button['command'] = self.play_button
+
+    def draw(self):
+
+        self.master.after(self.draw_timer, self.draw)
+
+        if sefl.playing:
+            self.model.create_image(
+                (
+                    self.view.canvas.winfo_width(),
+                    self.view.canvas.winfo_height()
+                )
+            )
+        self.view.draw_image()
     
     def push_load_button(self):
 
         file_types = [
-            ("MOVファイル", "*.mov"),
-            ("MP4ファイル", "*.mp4")
+            ("MOV file", "*.mov"),
+            ("MP4 file", "*.mp4")
         ]
         file_path = self.view.select_open_file(file_types)
 
@@ -179,19 +201,21 @@ class Controller(object):
             
             self.model.advance_frame()
             self.model.create_image(
-                self.view.canvas.winfo_width(),
-                self.view.canvas.winfo_height()
+                (
+                    self.view.canvas.winfo_width(),
+                    self.view.canvas.winfo_height()
+                )
             )
             self.model.back_to_video_head()
             self.view.draw_image()
 
             fps = self.model.get_fps()
-    """
-    def button_press(self, event):
+    
+    def play_button(self):
 
         if not self.playing:
             self.playing = True
-    """
+    
 
 
 #メインフレームの作成
@@ -201,7 +225,6 @@ main_frame.title('Test')
 model = Model()
 view = View(main_frame, model)
 controller = Controller(main_frame, model, view)
-
 
 main_frame.mainloop()
  
