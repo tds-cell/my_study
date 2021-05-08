@@ -86,11 +86,11 @@ class View(object):
         )
         #動画表示枠
         # 動画表示部
-        self.canvas_video = tk.Canvas(
+        self.canvas = tk.Canvas(
             self.movie_frame
             ,width=600, height=600
             )
-        self.canvas_video.pack()
+        self.canvas.pack()
 
         #あとでスケールバーは実装する
 
@@ -121,13 +121,87 @@ class View(object):
         # １コマ戻りボタン
         self.back_1_frame_button = tk.Button(self.button_frame, text=u'<<', width=10)
         self.back_1_frame_button.pack()
+    
+    def draw_image(self):
+
+        image = self.model.get_image()
+
+        if image is not None:
+            sx = (self.canvas.winfo_width() - image.width()) // 2
+            sy = (self.canvas.winfo_height() - image.height()) // 2
+
  
+    def select_open_file(self, file_types):
+        Dir = os.path.abspath(
+            os.path.dirname(__file__)
+            ) 
+
+        file_path = tk.filedialog.askopenfilename(
+            initialdir=Dir,
+            filetypes=file_types
+        )
+        return file_path
+
+class Controller(object):
+    def __init__(self, app, model, view):
+        self.master = app
+        self.model = model
+        self.view = view
+
+        self.playing = False
+
+        self.frame_timer = 0
+
+        self.draw_timer = 50
+
+        self.set_events()
+        
+    def set_events(self):
+        """
+        self.view.canvas.bind(
+            "",
+            self.button_press
+        )
+        """
+        self.view.load_button['command'] = self.push_load_button
+    
+    def push_load_button(self):
+
+        file_types = [
+            ("MOVファイル", "*.mov"),
+            ("MP4ファイル", "*.mp4")
+        ]
+        file_path = self.view.select_open_file(file_types)
+
+        if len(file_path) != 0:
+           #動画オブジェクト作成 
+            self.model.create_video(file_path)
+            
+            self.model.advance_frame()
+            self.model.create_image(
+                self.view.canvas.winfo_width(),
+                self.view.canvas.winfo_height()
+            )
+            self.model.back_to_video_head()
+            self.view.draw_image()
+
+            fps = self.model.get_fps()
+    """
+    def button_press(self, event):
+
+        if not self.playing:
+            self.playing = True
+    """
+
+
 #メインフレームの作成
 main_frame = tk.Tk()
 #メインフレームのタイトル
 main_frame.title('Test')
 model = Model()
 view = View(main_frame, model)
+controller = Controller(main_frame, model, view)
+
 
 main_frame.mainloop()
  
