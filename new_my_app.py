@@ -1,6 +1,9 @@
 #2021.05.05
 #新しくコードを書き換える。大幅に。
 
+#2021.05.09
+#このままだとうまく行かないので
+#１から作り直す
 import tkinter as tk
 import cv2
 import numpy as np
