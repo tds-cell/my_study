@@ -204,9 +204,9 @@ class View(object):
         self.scale_bar = tk.Scale(
             self.movie_frame
             ,orient="h"
-            ,from_=self.first_frame, to=self.frame_count
-            ,variable=self.slide_num
-            ,command=self.slide_movie
+            ,from_=self.model.first_frame, to=self.model.frame_count
+            ,variable=self.model.slide_num
+            ,command=self.model.slide_movie(self.model.slide_num)
             )
         self.scale_bar.pack(fill=tk.X, anchor=tk.SW)
 
