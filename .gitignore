@@ -2,3 +2,5 @@
 *.ods
 #test.pyファイルは含めない
 test.py
+#無視するフォルダ
+/original_movies
