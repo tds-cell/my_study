@@ -1,6 +1,9 @@
 #2021.05.05
 #新しくコードを書き換える。大幅に。
 
+#2021.05.09
+#このままだとうまく行かないので
+#１から作り直す
 import tkinter as tk
 import cv2
 import numpy as np
@@ -10,8 +13,110 @@ from tkinter import filedialog, messagebox
 
 #動画を扱う
 #データの処理(取得、作成、更新、削除)
+#CRUD処理(生成、読み込み、更新、削除)
+"""
+今はデータベースとのやりとりがないので
+Modelクラスはからのままでいいのでは？？
+"""
 class Model():
     def __init__(self):
+        pass
+            
+#アプリの表示を担う
+#アプリ内にウィジェットを作成・配置する
+class View(object):
+    def __init__(self, app, model):
+        #メインフレーム
+        self.main_frame = app
+        self.model = model
+        #画像の幅と高さを規定しておく。
+        #大きくなった時にリサイズするため
+        self.img_width_max = 600
+        self.img_height_max = 600
+
+        #アプリ内のウィジットを作成
+        self.create_widgets()
+
+    def create_widgets(self):
+        #メインフレームへの実装
+        #動画表示枠
+        self.movie_frame = tk.Frame(
+            self.main_frame, padx=10, pady=10
+            , relief=tk.SUNKEN, bd=2, width=10)
+        self.movie_frame.grid(row=0, column=0, rowspan=3
+        )
+        #動画表示枠
+        # 動画表示部
+        self.canvas_video = tk.Canvas(
+            self.movie_frame
+            ,width=self.img_width_max, height=self.img_height_max
+            )
+        self.canvas_video.pack()
+        #動画表示枠
+        # スケールバー
+        """
+        ここにslide_numがあるせいでうまく行かない
+        これならMVCで作らないほうがいいのか？
+        無理やりmodelにmain_frameを入れてもいいが
+        それだと目的と手段がごっちゃになっている
+        つまり最初のままでよかったのでは？
+        となってしまう
+        """
+        self.scale_bar = tk.Scale(
+            self.movie_frame
+            ,orient="h"
+            ,from_=self.model.first_frame, to=self.model.frame_count
+            ,variable=self.model.slide_num
+            ,command=self.model.slide_movie(self.model.slide_num)
+            )
+        self.scale_bar.pack(fill=tk.X, anchor=tk.SW)
+
+        #メインフレームへの実装
+        # ボタン配置枠
+        self.button_frame = tk.Frame(
+            self.main_frame, padx=10, pady=10
+            ,relief=tk.SUNKEN, bd=2, width=100
+            )
+        self.button_frame.grid(row=1, column=1)
+        #ボタン配置枠
+        # 動画のパス表示テキストボックス
+        self.text_box = tk.Entry(
+            self.button_frame, textvariable=self.model.file_name, width=30
+            )
+        self.text_box.pack()
+        #ボタン配置枠
+        # 動画のロード
+        self.load_button = tk.Button(self.button_frame, text=u'load', width=10)
+        self.load_button.pack()
+        #ボタン配置枠
+        # 再生ボタン
+        self.play_button = tk.Button(self.button_frame, text=u'▶', width=10)
+        self.play_button.pack()   
+        #ボタン配置枠
+        # 停止ボタン
+        self.stop_button = tk.Button(self.button_frame, text=u'■', width=10)
+        self.stop_button.pack()
+        #ボタン配置枠
+        # １コマ送りボタン
+        self.play_1_frame_button = tk.Button(self.button_frame, text=u'>>', width=10)
+        self.play_1_frame_button.pack()
+        #ボタン配置枠
+        # １コマ戻りボタン
+        self.back_1_frame_button = tk.Button(self.button_frame, text=u'<<', width=10)
+        self.back_1_frame_button.pack()
+    
+    def draw_image(self):
+        pass
+
+#イベント処理
+#viewの入力を受取りそれに対する処理をする場所
+#この処理を元にデータが動く
+#動いたデータはviewで表示される
+class Control(object):
+    def __init__(self, app, model, view):
+        self.main_frame = app
+        self.model = model
+        self.view = view
         #読み込むファイルの種類はデフォルトで全てにしておく
         self.fTyp = [("", "*")]
         #エラー対策。拡張子の初期化
@@ -30,6 +135,20 @@ class Model():
         #スライダーの位置変数
         self.slide_num = tk.DoubleVar(value=1.0)
 
+        self.set_events()
+
+    def set_events(self):
+        #動画ロード実行
+        self.view.load_button.configure(command=self.load_movie_file)
+        #再生実行
+        self.view.play_button.configure(command=self.play_func)
+        #停止実行
+        self.view.stop_button.configure(command=self.stop_func)
+        #１コマ送り実行
+        self.view.play_1_frame_button.configure(command=self.play_1_frame_func)
+        #１コマ戻り実行
+        self.view.back_1_frame_button.configure(command=self.back_1_frame_func)
+
     #動画load実行関数
     def load_movie_file(self):
         #動画を新たに読み込む場合リセットが必要
@@ -38,12 +157,12 @@ class Model():
             self.slide_num.set(1.0)
             self.img_num = 0
 
-        self.iDir_m = os.path.abspath(
+        self.iDir = os.path.abspath(
             os.path.dirname(__file__))        
         #これで今作業中のディレクトリ(=self.iDir)からのフォルダーダイアログを表示する
         #さらにfiletypeを全てにしておく
         self.filePath = filedialog.askopenfilename(
-            filetypes=self.fTyp, initialdir=self.iDir_m
+            filetypes=self.fTyp, initialdir=self.iDir
             )
 
         #拡張子を取得
@@ -167,110 +286,7 @@ class Model():
                 "Load file"
             )
             return
-  
-#アプリの表示を担う
-#アプリ内にウィジェットを作成・配置する
-class View(object):
-    def __init__(self, app, model):
-        #メインフレーム
-        self.main_frame = app
-        self.model = model
-        #画像の幅と高さを規定しておく。
-        #大きくなった時にリサイズするため
-        self.img_width_max = 600
-        self.img_height_max = 600
-
  
-        #アプリ内のウィジットを作成
-        self.create_widgets()
-
-    def create_widgets(self):
-        #メインフレームへの実装
-        #動画表示枠
-        self.movie_frame = tk.Frame(
-            self.main_frame, padx=10, pady=10
-            , relief=tk.SUNKEN, bd=2, width=10)
-        self.movie_frame.grid(row=0, column=0, rowspan=3
-        )
-        #動画表示枠
-        # 動画表示部
-        self.canvas_video = tk.Canvas(
-            self.movie_frame
-            ,width=self.img_width_max, height=self.img_height_max
-            )
-        self.canvas_video.pack()
-        #動画表示枠
-        # スケールバー
-        self.scale_bar = tk.Scale(
-            self.movie_frame
-            ,orient="h"
-            ,from_=self.model.first_frame, to=self.model.frame_count
-            ,variable=self.model.slide_num
-            ,command=self.model.slide_movie(self.model.slide_num)
-            )
-        self.scale_bar.pack(fill=tk.X, anchor=tk.SW)
-
-        #メインフレームへの実装
-        # ボタン配置枠
-        self.button_frame = tk.Frame(
-            self.main_frame, padx=10, pady=10
-            ,relief=tk.SUNKEN, bd=2, width=100
-            )
-        self.button_frame.grid(row=1, column=1)
-        #ボタン配置枠
-        # 動画のパス表示テキストボックス
-        self.text_box = tk.Entry(
-            self.button_frame, textvariable=self.model.file_name, width=30
-            )
-        self.text_box.pack()
-        #ボタン配置枠
-        # 動画のロード
-        self.load_button = tk.Button(self.button_frame, text=u'load', width=10)
-        self.load_button.pack()
-        #ボタン配置枠
-        # 再生ボタン
-        self.play_button = tk.Button(self.button_frame, text=u'▶', width=10)
-        self.play_button.pack()   
-        #ボタン配置枠
-        # 停止ボタン
-        self.stop_button = tk.Button(self.button_frame, text=u'■', width=10)
-        self.stop_button.pack()
-        #ボタン配置枠
-        # １コマ送りボタン
-        self.play_1_frame_button = tk.Button(self.button_frame, text=u'>>', width=10)
-        self.play_1_frame_button.pack()
-        #ボタン配置枠
-        # １コマ戻りボタン
-        self.back_1_frame_button = tk.Button(self.button_frame, text=u'<<', width=10)
-        self.back_1_frame_button.pack()
-    
-    def draw_image(self):
-        pass
-
-#イベント処理
-#viewの入力を受取りそれに対する処理をする場所
-#この処理を元にデータが動く
-#動いたデータはviewで表示される
-class Control(object):
-    def __init__(self, app, model, view):
-        self.main_frame = app
-        self.model = model
-        self.view = view
-    
-        self.set_events()
-
-    def set_events(self):
-        #動画ロード実行
-        self.view.load_button.configure(command=self.model.load_movie_file)
-        #再生実行
-        self.view.play_button.configure(command=self.model.play_func)
-        #停止実行
-        self.view.stop_button.configure(command=self.model.stop_func)
-        #１コマ送り実行
-        self.view.play_1_frame_button.configure(command=self.model.play_1_frame_func)
-        #１コマ戻り実行
-        self.view.back_1_frame_button.configure(command=self.model.back_1_frame_func)
-
 
 #########################################
 #ここから実行
