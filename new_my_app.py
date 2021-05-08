@@ -51,6 +51,14 @@ class View(object):
         self.canvas_video.pack()
         #動画表示枠
         # スケールバー
+        """
+        ここにslide_numがあるせいでうまく行かない
+        これならMVCで作らないほうがいいのか？
+        無理やりmodelにmain_frameを入れてもいいが
+        それだと目的と手段がごっちゃになっている
+        つまり最初のままでよかったのでは？
+        となってしまう
+        """
         self.scale_bar = tk.Scale(
             self.movie_frame
             ,orient="h"
