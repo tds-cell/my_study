@@ -173,7 +173,8 @@ class Controller(object):
         
         self.view.load_button['command'] = self.push_load_button
         self.view.play_button['command'] = self.play_button
-
+        self.view.stop_button['command'] = self.stop_button
+        
     def draw(self):
 
         self.master.after(self.draw_timer, self.draw)
@@ -232,6 +233,10 @@ class Controller(object):
         if not self.playing:
             self.playing = True
     
+    def stop_button(self):
+
+        if self.playing:
+            self.playing = False
 
 
 #メインフレームの作成
