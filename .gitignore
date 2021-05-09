@@ -4,3 +4,5 @@
 test.py
 #無視するフォルダ
 /original_movies
+#my_app.puは無視する
+my_app.py
