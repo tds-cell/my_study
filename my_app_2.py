@@ -297,26 +297,21 @@ class Controller(object):
 
     def play_1_frame(self):
         
-        file_path = self.view.select_open_file(file_types)
+        if self.playing:
+            self.playing = False
 
-        if len(file_path) != 0:
-            if self.playing:
-                self.playing = False
-
-            #フレームを１つ進める
-            self.model.advance_frame()
-            #イメージを呼び出す
-            if self.playing is False:
-                self.model.create_image(
-                    (
-                        self.view.canvas.winfo_width(),
-                        self.view.canvas.winfo_height()
-                    )
+        #フレームを１つ進める
+        self.model.advance_frame()
+        #イメージを呼び出す
+        if self.playing is False:
+            self.model.create_image(
+                (
+                    self.view.canvas.winfo_width(),
+                    self.view.canvas.winfo_height()
                 )
-            #描画を行う
-            self.view.draw_image()
-        elif not self.playing:
-            return 
+            )
+        #描画を行う
+        self.view.draw_image()
 
         print("slide_num:{}".format(self.view.slide_num))
 
