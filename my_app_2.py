@@ -174,7 +174,8 @@ class Controller(object):
         self.view.load_button['command'] = self.push_load_button
         self.view.play_button['command'] = self.play_button
         self.view.stop_button['command'] = self.stop_button
-        
+        self.view.play_1_frame_button['command'] = self.play_1_frame
+
     def draw(self):
 
         self.master.after(self.draw_timer, self.draw)
@@ -198,7 +199,8 @@ class Controller(object):
             if not ret:
                 self.model.back_to_video_head()
                 self.model.advance_frame()
-    
+
+    #動画読み込み用関数
     def push_load_button(self):
 
         file_types = [
@@ -206,19 +208,23 @@ class Controller(object):
             ("MP4 file", "*.mp4")
         ]
         file_path = self.view.select_open_file(file_types)
-
+        
+        #ファイルパスがあれば以下を実行する
         if len(file_path) != 0:
-           #動画オブジェクト作成 
+            #動画オブジェクト作成
             self.model.create_video(file_path)
-            
+            #動画フレームの読み込み
             self.model.advance_frame()
+            #画像の変換とサイズ調整
             self.model.create_image(
                 (
                     self.view.canvas.winfo_width(),
                     self.view.canvas.winfo_height()
                 )
             )
+            #先頭のフレームを読み込む
             self.model.back_to_video_head()
+            #画像の描画を行う
             self.view.draw_image()
 
             fps = self.model.get_fps()
@@ -227,16 +233,35 @@ class Controller(object):
             self.master.after(self.frame_timer, self.frame)
 
             self.master.after(self.draw_timer, self.draw)
-    
+
+    #動画再生用関数
     def play_button(self):
 
         if not self.playing:
             self.playing = True
-    
+
+    #動画停止用関数    
     def stop_button(self):
 
         if self.playing:
             self.playing = False
+
+    def play_1_frame(self):
+
+        if self.playing:
+            self.playing = False
+
+        self.model.advance_frame()
+
+        if self.playing is False:
+            self.model.create_image(
+                (
+                    self.view.canvas.winfo_width(),
+                    self.view.canvas.winfo_height()
+                )
+            )
+        self.view.draw_image()
+        
 
 
 #メインフレームの作成
