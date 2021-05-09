@@ -84,6 +84,12 @@ class Model(object):
             return None
         
         return self.video.get(cv2.CAP_PROP_POS_FRAMES)
+    def set_frames(self, num):
+        
+        if self.video is None:
+            return None
+
+        return self.video.set(cv2.CAP_PROP_POS_FRAMES, num)
 
 class View(object):
     def __init__(self, app, model):
@@ -175,7 +181,7 @@ class Controller(object):
         self.view = view
         
         #現在のフレーム変数を種毒        
-        self.current_frame =  self.model.get_frames()
+        #self.current_frame =  self.model.get_frames()
 
         self.playing = False
 
@@ -191,6 +197,7 @@ class Controller(object):
         self.view.play_button['command'] = self.play_button
         self.view.stop_button['command'] = self.stop_button
         self.view.play_1_frame_button['command'] = self.play_1_frame
+        self.view.back_1_frame_button['command'] = self.back_1_frame
 
     def draw(self):
 
@@ -282,7 +289,29 @@ class Controller(object):
         #描画を行う
         self.view.draw_image()
         
-    
+    def back_1_frame(self):
+
+        if self.playing:
+            self.playing = False
+        
+        #現在のフレームを2個戻す   
+        num = int(self.model.get_frames()- 2.0)
+       
+        self.model.set_frames(num)
+
+        #フレームを１つ進める
+        self.model.advance_frame()
+        #イメージを呼び出す
+        if self.playing is False:
+            self.model.create_image(
+                (
+                    self.view.canvas.winfo_width(),
+                    self.view.canvas.winfo_height()
+                )
+            )
+        #描画を行う
+        self.view.draw_image()
+ 
 
 #メインフレームの作成
 main_frame = tk.Tk()
