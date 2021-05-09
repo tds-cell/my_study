@@ -267,6 +267,10 @@ class Controller(object):
             #画像の描画を行う
             self.view.draw_image()
 
+            #動画を読み込んでから
+            #スケールバーを実装する
+            
+
 
             fps = self.model.get_fps()
             self.frame_timer = int(1 / fps * 1000 + 0.5)
@@ -306,7 +310,7 @@ class Controller(object):
         #描画を行う
         self.view.draw_image()
 
-        print("slide_num:{}".format(self.view.slide_num.get()))
+        #print("slide_num:{}".format(self.view.slide_num.get()))
 
         
     def back_1_frame(self):
@@ -316,7 +320,6 @@ class Controller(object):
         #現在のフレームを2個戻す   
         back_num = int(self.model.get_frames()- 2.0)
         self.model.set_frames(back_num)
-
         #フレームを１つ進める
         self.model.advance_frame()
 
@@ -335,7 +338,7 @@ class Controller(object):
         self.model.set_frames(float(num))
 
         self.view.slide_num.set(num)
-
+        print(self.view.slide_num.get())
         self.model.advance_frame()
         #イメージを呼び出す
         if self.playing is False:
@@ -347,7 +350,7 @@ class Controller(object):
             )
         #描画を行う
         self.view.draw_image()
-        print(self.model.get_frames())
+        #print(self.model.get_frames())
 
 
 #メインフレームの作成
