@@ -10,9 +10,6 @@ class Model(object):
         #動画オブジェクト参照用
         #これは動画ファイルそのモノ
         self.video = None
-        #読み込んだフレーム 
-        #これは動画の1フレームのこと
-        self.frames = 0
 
     #動画作成関数    
     #動画のパスを引数して動画オブジェクトを作成している
@@ -299,24 +296,28 @@ class Controller(object):
             self.playing = False
 
     def play_1_frame(self):
+        
+        file_path = self.view.select_open_file(file_types)
 
-        if self.playing:
-            self.playing = False
+        if len(file_path) != 0:
+            if self.playing:
+                self.playing = False
+
+            #フレームを１つ進める
+            self.model.advance_frame()
+            #イメージを呼び出す
+            if self.playing is False:
+                self.model.create_image(
+                    (
+                        self.view.canvas.winfo_width(),
+                        self.view.canvas.winfo_height()
+                    )
+                )
+            #描画を行う
+            self.view.draw_image()
         elif not self.playing:
             return 
 
-        #フレームを１つ進める
-        self.model.advance_frame()
-        #イメージを呼び出す
-        if self.playing is False:
-            self.model.create_image(
-                (
-                    self.view.canvas.winfo_width(),
-                    self.view.canvas.winfo_height()
-                )
-            )
-        #描画を行う
-        self.view.draw_image()
         print("slide_num:{}".format(self.view.slide_num))
 
         
