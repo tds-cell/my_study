@@ -49,7 +49,6 @@ class Canvas_Video:
         self.ext = None
         #スライダーの位置変数
         self.slide_num = tk.DoubleVar(value=1.0)
-
         #キャンバスを作っていく
         self.create_widgets()
         
