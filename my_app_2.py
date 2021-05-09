@@ -29,6 +29,7 @@ class Model(object):
         return ret
     #動画を先頭に戻す。
     # こんなのいつ使う？ 
+    #結構大事かも
     def back_to_video_head(self):
         self.video.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
@@ -142,7 +143,6 @@ class View(object):
                 anchor=tk.NW,
                 tag="image"
             )
-
  
     def select_open_file(self, file_types):
         Dir = os.path.abspath(
@@ -178,7 +178,7 @@ class Controller(object):
 
         self.master.after(self.draw_timer, self.draw)
 
-        if sefl.playing:
+        if self.playing:
             self.model.create_image(
                 (
                     self.view.canvas.winfo_width(),
@@ -186,6 +186,17 @@ class Controller(object):
                 )
             )
         self.view.draw_image()
+    
+    def frame(self):
+
+        self.master.after(self.frame_timer, self.frame)
+
+        if self.playing:
+            ret = self.model.advance_frame()
+
+            if not ret:
+                self.model.back_to_video_head()
+                self.model.advance_frame()
     
     def push_load_button(self):
 
@@ -210,6 +221,11 @@ class Controller(object):
             self.view.draw_image()
 
             fps = self.model.get_fps()
+            self.frame_timer = int(1 / fps * 1000 + 0.5)
+
+            self.master.after(self.frame_timer, self.frame)
+
+            self.master.after(self.draw_timer, self.draw)
     
     def play_button(self):
 
