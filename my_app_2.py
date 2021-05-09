@@ -27,7 +27,7 @@ class Model(object):
         ret, self.frame = self.video.read() 
         
         self.current_frame = self.get_frames()
-        print(self.current_frame)
+        #print(self.current_frame)
         return ret
 
     #動画を先頭に戻す。
@@ -102,7 +102,7 @@ class View(object):
         #現在のスライダー位置を保存
         #スケールバーの変数には
         #ウィジット変数を使用しないとダメ
-        self.slide_num = tk.DoubleVar()
+        #self.slide_num = tk.DoubleVar()
         #self.slide_num.set(self.model.current_frame)
         
         self.create_widgets()
@@ -123,15 +123,6 @@ class View(object):
             ,width=600, height=600
             )
         self.canvas.pack()
-
-        self.scale_bar = tk.Scale(
-            self.movie_frame
-            ,orient="h"
-            ,from_=0
-            ,variable=self.slide_num.get()
-        )
-
-        self.scale_bar.pack(fill=tk.X, anchor=tk.SW)
 
         #メインフレームへの実装
         # ボタン配置枠
@@ -212,9 +203,7 @@ class Controller(object):
         self.view.stop_button['command'] = self.stop_button
         self.view.play_1_frame_button['command'] = self.play_1_frame
         self.view.back_1_frame_button['command'] = self.back_1_frame
-        #self.view.scale_bar['to'] = self.model.get_frame_count
-        #self.view.scale_bar['variable'] = self.model.current_frame
-        self.view.scale_bar['command'] = self.slide_movie
+        #self.scale_bar['command'] = self.slide_movie
        
     def draw(self):
 
@@ -267,9 +256,23 @@ class Controller(object):
             #画像の描画を行う
             self.view.draw_image()
 
+            self.slide_num = tk.DoubleVar()
+            self.slide_num.set(self.model.current_frame)
+ 
             #動画を読み込んでから
             #スケールバーを実装する
-            
+            self.scale_bar = tk.Scale(
+                self.view.movie_frame
+                ,orient="h"
+                ,from_=0
+                ,to=self.model.get_frame_count()
+                ,variable=self.slide_num
+                ,command=self.slide_movie
+            )
+
+            self.scale_bar.pack(fill=tk.X, anchor=tk.SW)
+
+
 
 
             fps = self.model.get_fps()
@@ -284,6 +287,7 @@ class Controller(object):
 
         if not self.playing:
             self.playing = True
+            self.slide_num.set(self.model.current_frame)
 
     #動画停止用関数    
     def stop_button(self):
@@ -309,7 +313,7 @@ class Controller(object):
             )
         #描画を行う
         self.view.draw_image()
-
+        self.slide_num.set(self.model.current_frame)
         #print("slide_num:{}".format(self.view.slide_num.get()))
 
         
@@ -333,12 +337,13 @@ class Controller(object):
             )
         #描画を行う
         self.view.draw_image()
+        self.slide_num.set(self.model.current_frame)
 
     def slide_movie(self, num):
         self.model.set_frames(float(num))
 
-        self.view.slide_num.set(num)
-        print(self.view.slide_num.get())
+        self.slide_num.set(num)
+        print(self.slide_num.get())
         self.model.advance_frame()
         #イメージを呼び出す
         if self.playing is False:
