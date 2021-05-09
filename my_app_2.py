@@ -10,6 +10,9 @@ class Model(object):
         #動画オブジェクト参照用
         #これは動画ファイルそのモノ
         self.video = None
+        #動画読み込む前のフレームを規定
+        #エラー対策
+        self.current_frame = 0.0
 
     #動画作成関数    
     #動画のパスを引数して動画オブジェクトを作成している
@@ -23,12 +26,11 @@ class Model(object):
             return
         ret, self.frame = self.video.read() 
         
-        print(self.get_frames())
-
+        self.current_frame = self.get_frames()
+        print(self.current_frame)
         return ret
+
     #動画を先頭に戻す。
-    # こんなのいつ使う？ 
-    #結構大事かも
     def back_to_video_head(self):
         self.video.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
@@ -63,26 +65,26 @@ class Model(object):
         if self.image is not None:
             self.image_tk = ImageTk.PhotoImage((self.image))
         return self.image_tk
+
     #fpsレートを取得
     def get_fps(self):
 
         if self.video is None:
             return None
-
         return self.video.get(cv2.CAP_PROP_FPS)
+
     #現在のフレーム位置を取得    
     def get_frames(self):
 
         if self.video is None:
             return None
-        
         return self.video.get(cv2.CAP_PROP_POS_FRAMES)
+
     #現在のフレーム位置をビデオオブジェクトにセット
     def set_frames(self, num):
         
         if self.video is None:
             return None
-
         return self.video.set(cv2.CAP_PROP_POS_FRAMES, num)
 
     #オブジェクトの総フレームを取得
@@ -90,7 +92,6 @@ class Model(object):
 
         if self.video is None:
             return None
-
         return self.video.get(cv2.CAP_PROP_FRAME_COUNT)
 
 class View(object):
@@ -102,10 +103,12 @@ class View(object):
         #スケールバーの変数には
         #ウィジット変数を使用しないとダメ
         self.slide_num = tk.DoubleVar()
+        #self.slide_num.set(self.model.current_frame)
         
         self.create_widgets()
 
     def create_widgets(self):
+        print(self.model.get_frame_count())
        #メインフレームへの実装
         #動画表示枠
         self.movie_frame = tk.Frame(
@@ -121,17 +124,11 @@ class View(object):
             )
         self.canvas.pack()
 
-        
-        def slide_movie(self, num):
-            num = num
-            self.model.set_frames(num)
-
         self.scale_bar = tk.Scale(
             self.movie_frame
             ,orient="h"
             ,from_=0
-            ,to=60.0
-            ,variable=self.model.get_frames()
+            ,variable=self.slide_num.get()
         )
 
         self.scale_bar.pack(fill=tk.X, anchor=tk.SW)
@@ -199,10 +196,8 @@ class Controller(object):
         self.master = app
         self.model = model
         self.view = view
-        
-        #現在のフレーム変数を種毒        
-        #self.current_frame =  self.model.get_frames()
 
+        #再生中はTrue, 停止中はFalse
         self.playing = False
 
         self.frame_timer = 0
@@ -212,12 +207,13 @@ class Controller(object):
         self.set_events()
         
     def set_events(self):
-        
         self.view.load_button['command'] = self.push_load_button
         self.view.play_button['command'] = self.play_button
         self.view.stop_button['command'] = self.stop_button
         self.view.play_1_frame_button['command'] = self.play_1_frame
         self.view.back_1_frame_button['command'] = self.back_1_frame
+        #self.view.scale_bar['to'] = self.model.get_frame_count
+        #self.view.scale_bar['variable'] = self.model.current_frame
         self.view.scale_bar['command'] = self.slide_movie
        
     def draw(self):
@@ -271,10 +267,6 @@ class Controller(object):
             #画像の描画を行う
             self.view.draw_image()
 
-            #現在のフレーム値を取得
-            self.view.slide_num.set(
-                self.model.get_frames()
-            )
 
             fps = self.model.get_fps()
             self.frame_timer = int(1 / fps * 1000 + 0.5)
@@ -302,6 +294,7 @@ class Controller(object):
 
         #フレームを１つ進める
         self.model.advance_frame()
+
         #イメージを呼び出す
         if self.playing is False:
             self.model.create_image(
@@ -313,22 +306,20 @@ class Controller(object):
         #描画を行う
         self.view.draw_image()
 
-        print("slide_num:{}".format(self.view.slide_num))
+        print("slide_num:{}".format(self.view.slide_num.get()))
 
         
     def back_1_frame(self):
 
         if self.playing:
             self.playing = False
-        elif not self.playing:
-            return 
         #現在のフレームを2個戻す   
-        num = int(self.model.get_frames()- 2.0)
-       
-        self.model.set_frames(num)
+        back_num = int(self.model.get_frames()- 2.0)
+        self.model.set_frames(back_num)
 
         #フレームを１つ進める
         self.model.advance_frame()
+
         #イメージを呼び出す
         if self.playing is False:
             self.model.create_image(
@@ -343,6 +334,8 @@ class Controller(object):
     def slide_movie(self, num):
         self.model.set_frames(float(num))
 
+        self.view.slide_num.set(num)
+
         self.model.advance_frame()
         #イメージを呼び出す
         if self.playing is False:
@@ -354,6 +347,7 @@ class Controller(object):
             )
         #描画を行う
         self.view.draw_image()
+        print(self.model.get_frames())
 
 
 #メインフレームの作成
