@@ -26,10 +26,6 @@ class Model(object):
             return
         ret, self.frame = self.video.read() 
         
-        if ret:
-            self.frames = self.frames + 1
-        print("self.frames:{}".format(self.frames))
-
         print(self.get_frames())
 
         return ret
@@ -70,20 +66,21 @@ class Model(object):
         if self.image is not None:
             self.image_tk = ImageTk.PhotoImage((self.image))
         return self.image_tk
-
+    #fpsレートを取得
     def get_fps(self):
 
         if self.video is None:
             return None
 
         return self.video.get(cv2.CAP_PROP_FPS)
-    
+    #現在のフレーム位置を取得    
     def get_frames(self):
 
         if self.video is None:
             return None
         
         return self.video.get(cv2.CAP_PROP_POS_FRAMES)
+    #現在のフレーム位置をビデオオブジェクトにセット
     def set_frames(self, num):
         
         if self.video is None:
@@ -91,11 +88,24 @@ class Model(object):
 
         return self.video.set(cv2.CAP_PROP_POS_FRAMES, num)
 
+    #オブジェクトの総フレームを取得
+    def get_frame_count(self):
+
+        if self.video is None:
+            return None
+
+        return self.video.get(cv2.CAP_PROP_FRAME_COUNT)
+
 class View(object):
     def __init__(self, app, model):
         self.master = app
         self.model = model
 
+        #現在のスライダー位置を保存
+        #スケールバーの変数には
+        #ウィジット変数を使用しないとダメ
+        self.slide_num = tk.DoubleVar()
+        
         self.create_widgets()
 
     def create_widgets(self):
@@ -114,7 +124,20 @@ class View(object):
             )
         self.canvas.pack()
 
-        #あとでスケールバーは実装する
+        
+        def slide_movie(self, num):
+            num = num
+            self.model.set_frames(num)
+
+        self.scale_bar = tk.Scale(
+            self.movie_frame
+            ,orient="h"
+            ,from_=0
+            ,to=60.0
+            ,variable=self.model.get_frames()
+        )
+
+        self.scale_bar.pack(fill=tk.X, anchor=tk.SW)
 
         #メインフレームへの実装
         # ボタン配置枠
@@ -198,7 +221,8 @@ class Controller(object):
         self.view.stop_button['command'] = self.stop_button
         self.view.play_1_frame_button['command'] = self.play_1_frame
         self.view.back_1_frame_button['command'] = self.back_1_frame
-
+        self.view.scale_bar['command'] = self.slide_movie
+       
     def draw(self):
 
         self.master.after(self.draw_timer, self.draw)
@@ -226,9 +250,6 @@ class Controller(object):
     #動画読み込み用関数
     def push_load_button(self):
 
-        #現在のフレーム変数を定義        
-        self.current_frame =  0
-
         file_types = [
             ("MOV file", "*.mov"),
             ("MP4 file", "*.mp4")
@@ -253,6 +274,11 @@ class Controller(object):
             #画像の描画を行う
             self.view.draw_image()
 
+            #現在のフレーム値を取得
+            self.view.slide_num.set(
+                self.model.get_frames()
+            )
+
             fps = self.model.get_fps()
             self.frame_timer = int(1 / fps * 1000 + 0.5)
 
@@ -276,6 +302,9 @@ class Controller(object):
 
         if self.playing:
             self.playing = False
+        elif not self.playing:
+            return 
+
         #フレームを１つ進める
         self.model.advance_frame()
         #イメージを呼び出す
@@ -288,12 +317,15 @@ class Controller(object):
             )
         #描画を行う
         self.view.draw_image()
+        print("slide_num:{}".format(self.view.slide_num))
+
         
     def back_1_frame(self):
 
         if self.playing:
             self.playing = False
-        
+        elif not self.playing:
+            return 
         #現在のフレームを2個戻す   
         num = int(self.model.get_frames()- 2.0)
        
@@ -311,7 +343,22 @@ class Controller(object):
             )
         #描画を行う
         self.view.draw_image()
- 
+
+    def slide_movie(self, num):
+        self.model.set_frames(float(num))
+
+        self.model.advance_frame()
+        #イメージを呼び出す
+        if self.playing is False:
+            self.model.create_image(
+                (
+                    self.view.canvas.winfo_width(),
+                    self.view.canvas.winfo_height()
+                )
+            )
+        #描画を行う
+        self.view.draw_image()
+
 
 #メインフレームの作成
 main_frame = tk.Tk()
