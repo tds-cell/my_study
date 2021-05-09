@@ -12,7 +12,7 @@ class Model(object):
         self.video = None
         #読み込んだフレーム 
         #これは動画の1フレームのこと
-        self.frames = None
+        self.frames = 0
 
     #動画作成関数    
     #動画のパスを引数して動画オブジェクトを作成している
@@ -25,6 +25,12 @@ class Model(object):
         if not self.video:
             return
         ret, self.frame = self.video.read() 
+        
+        if ret:
+            self.frames = self.frames + 1
+        print("self.frames:{}".format(self.frames))
+
+        print(self.get_frames())
 
         return ret
     #動画を先頭に戻す。
@@ -71,6 +77,13 @@ class Model(object):
             return None
 
         return self.video.get(cv2.CAP_PROP_FPS)
+    
+    def get_frames(self):
+
+        if self.video is None:
+            return None
+        
+        return self.video.get(cv2.CAP_PROP_POS_FRAMES)
 
 class View(object):
     def __init__(self, app, model):
@@ -160,6 +173,9 @@ class Controller(object):
         self.master = app
         self.model = model
         self.view = view
+        
+        #現在のフレーム変数を種毒        
+        self.current_frame =  self.model.get_frames()
 
         self.playing = False
 
@@ -202,6 +218,9 @@ class Controller(object):
 
     #動画読み込み用関数
     def push_load_button(self):
+
+        #現在のフレーム変数を定義        
+        self.current_frame =  0
 
         file_types = [
             ("MOV file", "*.mov"),
@@ -250,9 +269,9 @@ class Controller(object):
 
         if self.playing:
             self.playing = False
-
+        #フレームを１つ進める
         self.model.advance_frame()
-
+        #イメージを呼び出す
         if self.playing is False:
             self.model.create_image(
                 (
@@ -260,9 +279,10 @@ class Controller(object):
                     self.view.canvas.winfo_height()
                 )
             )
+        #描画を行う
         self.view.draw_image()
         
-
+    
 
 #メインフレームの作成
 main_frame = tk.Tk()
