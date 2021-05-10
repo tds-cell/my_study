@@ -304,11 +304,16 @@ class Controller(object):
         #描画を行う
         self.view.draw_image()
 
-        
+    #１コマ戻り用関数
     def back_1_frame(self):
 
         if self.playing:
             self.playing = False
+        if self.model.get_frames() == 0:
+            return
+        elif self.model.get_frames() == 1:
+            return self.model.back_to_video_head()
+
         #現在のフレームを2個戻す   
         back_num = int(self.model.get_frames()- 2.0)
         self.model.set_frames(back_num)
