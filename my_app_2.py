@@ -260,7 +260,6 @@ class Controller(object):
                 ,variable=self.view.slide_num
                 ,command=self.slide_movie
             )
-
             self.scale_bar.pack(fill=tk.X, anchor=tk.SW)
 
             fps = self.model.get_fps()
@@ -282,13 +281,17 @@ class Controller(object):
         if self.playing:
             self.playing = False
 
+    #１コマ送り用関数
     def play_1_frame(self):
         
         if self.playing:
             self.playing = False
-
+        
         #フレームを１つ進める
         self.model.advance_frame()
+
+        if self.model.get_frames() == self.model.get_frame_count():
+            return self.model.back_to_video_head()
 
         #イメージを呼び出す
         if self.playing is False:
@@ -327,7 +330,7 @@ class Controller(object):
         self.model.set_frames(float(num))
 
         self.view.slide_num.set(num)
-        #print(self.slide_num.get())
+
         self.model.advance_frame()
         #イメージを呼び出す
         if self.playing is False:
