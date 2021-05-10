@@ -102,7 +102,7 @@ class View(object):
         #現在のスライダー位置を保存
         #スケールバーの変数には
         #ウィジット変数を使用しないとダメ
-        #self.slide_num = tk.DoubleVar()
+        self.slide_num = tk.DoubleVar()
         #self.slide_num.set(self.model.current_frame)
         
         self.create_widgets()
@@ -170,6 +170,7 @@ class View(object):
                 anchor=tk.NW,
                 tag="image"
             )
+            self.slide_num.set(self.model.current_frame)
  
     def select_open_file(self, file_types):
         Dir = os.path.abspath(
@@ -256,9 +257,6 @@ class Controller(object):
             #画像の描画を行う
             self.view.draw_image()
 
-            self.slide_num = tk.DoubleVar()
-            self.slide_num.set(self.model.current_frame)
- 
             #動画を読み込んでから
             #スケールバーを実装する
             self.scale_bar = tk.Scale(
@@ -266,14 +264,11 @@ class Controller(object):
                 ,orient="h"
                 ,from_=0
                 ,to=self.model.get_frame_count()
-                ,variable=self.slide_num
+                ,variable=self.view.slide_num
                 ,command=self.slide_movie
             )
 
             self.scale_bar.pack(fill=tk.X, anchor=tk.SW)
-
-
-
 
             fps = self.model.get_fps()
             self.frame_timer = int(1 / fps * 1000 + 0.5)
@@ -287,7 +282,6 @@ class Controller(object):
 
         if not self.playing:
             self.playing = True
-            self.slide_num.set(self.model.current_frame)
 
     #動画停止用関数    
     def stop_button(self):
@@ -313,8 +307,6 @@ class Controller(object):
             )
         #描画を行う
         self.view.draw_image()
-        self.slide_num.set(self.model.current_frame)
-        #print("slide_num:{}".format(self.view.slide_num.get()))
 
         
     def back_1_frame(self):
@@ -337,13 +329,12 @@ class Controller(object):
             )
         #描画を行う
         self.view.draw_image()
-        self.slide_num.set(self.model.current_frame)
 
     def slide_movie(self, num):
         self.model.set_frames(float(num))
 
-        self.slide_num.set(num)
-        print(self.slide_num.get())
+        self.view.slide_num.set(num)
+        #print(self.slide_num.get())
         self.model.advance_frame()
         #イメージを呼び出す
         if self.playing is False:
@@ -355,7 +346,6 @@ class Controller(object):
             )
         #描画を行う
         self.view.draw_image()
-        #print(self.model.get_frames())
 
 
 #メインフレームの作成
