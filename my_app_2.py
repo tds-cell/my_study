@@ -259,6 +259,7 @@ class Controller(object):
                 ,to=self.model.get_frame_count()
                 ,variable=self.view.slide_num
                 ,command=self.slide_movie
+                ,tag="bar"
             )
             self.scale_bar.pack(fill=tk.X, anchor=tk.SW)
 
