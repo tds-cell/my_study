@@ -180,7 +180,6 @@ class View(object):
             )
             #ここでフレーム値をセットする
             self.slide_num.set(self.model.get_frames())
-            self.last_frame.set(self.model.get_frame_count())
  
     def select_open_file(self, file_types):
         Dir = os.path.abspath(
@@ -192,16 +191,6 @@ class View(object):
             filetypes=file_types
         )
         return file_path
-
-    def slide_bar(self):
-        self.scale_bar = tk.Scale(
-            self.movie_frame
-            ,orient="h"
-            ,from_=0
-            ,to=self.model.get_frame_count()
-            ,variable=self.slide_num
-        )
-        self.scale_bar.pack(fill=tk.X, anchor=tk.SW)
 
 class Controller(object):
     def __init__(self, app, model, view):
@@ -277,9 +266,7 @@ class Controller(object):
             #画像の描画を行う
             self.view.draw_image()
 
-            #self.view.slide_bar()
-            #self.view.slide_bar['to'] = self.model.get_frame_count()
-            #self.view.scale_bar.set('to') = self.model.get_frame_count()
+            self.view.scale_bar.config(to=self.model.get_frame_count())
 
             fps = self.model.get_fps()
             self.frame_timer = int(1 / fps * 1000 + 0.5)
