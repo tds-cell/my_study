@@ -22,7 +22,7 @@ class Model(object):
         if not self.video:
             return
         ret, self.frame = self.video.read() 
-        
+
         return ret
 
     #動画を先頭に戻す。
@@ -98,9 +98,6 @@ class View(object):
         #スケールバーの変数には
         #ウィジット変数を使用しないとダメ
         self.slide_num = tk.DoubleVar()
-        #最後のフレーム数を保存する
-        self.last_frame = tk.DoubleVar(value=0.0)
-        #self.last_frame = 0
         
         self.create_widgets()
 
@@ -201,7 +198,7 @@ class Controller(object):
         #再生中はTrue, 停止中はFalse
         self.playing = False
 
-        self.frame_timer = 0
+        self.frame_timer = 10
 
         self.draw_timer = 50
 
@@ -266,6 +263,7 @@ class Controller(object):
             #画像の描画を行う
             self.view.draw_image()
 
+            #スケールバーの最終フレームを取得する
             self.view.scale_bar.config(to=self.model.get_frame_count())
 
             fps = self.model.get_fps()
@@ -277,6 +275,7 @@ class Controller(object):
 
     #動画再生用関数
     def play_button(self):
+
 
         if not self.playing:
             self.playing = True
@@ -315,6 +314,12 @@ class Controller(object):
 
         if self.playing:
             self.playing = False
+        
+        if self.model.get_frames() == 1:
+            self.model.back_to_video_head()
+            self.view.slide_num.set(self.model.get_frames())
+            return
+
         #現在のフレームを2個戻す   
         back_num = int(self.model.get_frames()- 2.0)
         self.model.set_frames(back_num)
