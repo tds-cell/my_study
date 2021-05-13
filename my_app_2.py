@@ -58,7 +58,7 @@ class Model(object):
     def get_image(self):
 
         if self.image is not None:
-            self.image_tk = ImageTk.PhotoImage((self.image))
+            self.image_tk = ImageTk.PhotoImage(self.image)
         return self.image_tk
 
     #fpsレートを取得
@@ -98,11 +98,13 @@ class View(object):
         #スケールバーの変数には
         #ウィジット変数を使用しないとダメ
         self.slide_num = tk.DoubleVar()
+        #最後のフレーム数を保存する
+        self.last_frame = tk.DoubleVar(value=0.0)
+        #self.last_frame = 0
         
         self.create_widgets()
 
     def create_widgets(self):
-        print(self.model.get_frame_count())
        #メインフレームへの実装
         #動画表示枠
         self.movie_frame = tk.Frame(
@@ -118,6 +120,17 @@ class View(object):
             )
         self.canvas.pack()
 
+        #スケールバー実装
+        #数値の更新が出来れば完成となるはず
+        self.scale_bar = tk.Scale(
+            self.movie_frame
+            ,orient="h"
+            ,from_=0
+            #,to=self.model.get_frame_count()
+            ,variable=self.slide_num
+        )
+        self.scale_bar.pack(fill=tk.X, anchor=tk.SW)
+
         #メインフレームへの実装
         # ボタン配置枠
         self.button_frame = tk.Frame(
@@ -125,6 +138,7 @@ class View(object):
             ,relief=tk.SUNKEN, bd=2, width=100
             )
         self.button_frame.grid(row=1, column=1)
+
         #ボタン配置枠
         # 動画のロード
         self.load_button = tk.Button(self.button_frame, text=u'load', width=10)
@@ -164,7 +178,9 @@ class View(object):
                 anchor=tk.NW,
                 tag="image"
             )
+            #ここでフレーム値をセットする
             self.slide_num.set(self.model.get_frames())
+            self.last_frame.set(self.model.get_frame_count())
  
     def select_open_file(self, file_types):
         Dir = os.path.abspath(
@@ -176,6 +192,16 @@ class View(object):
             filetypes=file_types
         )
         return file_path
+
+    def slide_bar(self):
+        self.scale_bar = tk.Scale(
+            self.movie_frame
+            ,orient="h"
+            ,from_=0
+            ,to=self.model.get_frame_count()
+            ,variable=self.slide_num
+        )
+        self.scale_bar.pack(fill=tk.X, anchor=tk.SW)
 
 class Controller(object):
     def __init__(self, app, model, view):
@@ -198,6 +224,7 @@ class Controller(object):
         self.view.stop_button['command'] = self.stop_button
         self.view.play_1_frame_button['command'] = self.play_1_frame
         self.view.back_1_frame_button['command'] = self.back_1_frame
+        self.view.scale_bar['command'] = self.slide_movie
        
     def draw(self):
 
@@ -227,8 +254,8 @@ class Controller(object):
     def push_load_button(self):
 
         file_types = [
-            ("MOV file", "*.mov"),
-            ("MP4 file", "*.mp4")
+            ("MP4 file", "*.mp4"),
+            ("MOV file", "*.mov")
         ]
         file_path = self.view.select_open_file(file_types)
         
@@ -250,18 +277,9 @@ class Controller(object):
             #画像の描画を行う
             self.view.draw_image()
 
-            #動画を読み込んでから
-            #スケールバーを実装する
-            self.scale_bar = tk.Scale(
-                self.view.movie_frame
-                ,orient="h"
-                ,from_=0
-                ,to=self.model.get_frame_count()
-                ,variable=self.view.slide_num
-                ,command=self.slide_movie
-                ,tag="bar"
-            )
-            self.scale_bar.pack(fill=tk.X, anchor=tk.SW)
+            #self.view.slide_bar()
+            #self.view.slide_bar['to'] = self.model.get_frame_count()
+            #self.view.scale_bar.set('to') = self.model.get_frame_count()
 
             fps = self.model.get_fps()
             self.frame_timer = int(1 / fps * 1000 + 0.5)
@@ -305,16 +323,11 @@ class Controller(object):
         #描画を行う
         self.view.draw_image()
 
-    #１コマ戻り用関数
+        
     def back_1_frame(self):
 
         if self.playing:
             self.playing = False
-        if self.model.get_frames() == 0:
-            return
-        elif self.model.get_frames() == 1:
-            return self.model.back_to_video_head()
-
         #現在のフレームを2個戻す   
         back_num = int(self.model.get_frames()- 2.0)
         self.model.set_frames(back_num)
