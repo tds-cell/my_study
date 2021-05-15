@@ -94,6 +94,9 @@ class View(object):
         self.master = app
         self.model = model
 
+        self.canvas_height = 600
+        self.canvas_width = 600
+
         #現在のスライダー位置を保存
         #スケールバーの変数には
         #ウィジット変数を使用しないとダメ
@@ -107,15 +110,21 @@ class View(object):
         self.movie_frame = tk.Frame(
             self.master, padx=10, pady=10
             , relief=tk.SUNKEN, bd=2, width=10)
-        self.movie_frame.grid(row=0, column=0, rowspan=3
+        self.movie_frame.grid(
+            row=0, column=0, rowspan=3
+            #,sticky=('nw')
         )
+        self.movie_frame.columnconfigure(0, weight=1)
+        self.movie_frame.rowconfigure(0, weight=3)
+
         #動画表示枠
         # 動画表示部
         self.canvas = tk.Canvas(
             self.movie_frame
             ,width=600, height=600
             )
-        self.canvas.pack()
+        self.canvas.pack(expand=True, fill=tk.BOTH)
+
 
         #スケールバー実装
         #数値の更新が出来れば完成となるはず
@@ -125,7 +134,10 @@ class View(object):
             ,from_=0
             ,variable=self.slide_num
         )
-        self.scale_bar.pack(fill=tk.X, anchor=tk.SW)
+        self.scale_bar.pack(
+            fill=tk.X, anchor=tk.SW
+            ,expand=True
+        )
 
         #メインフレームへの実装
         # ボタン配置枠
@@ -135,14 +147,19 @@ class View(object):
             )
         self.button_frame.grid(row=1, column=1)
 
+        self.button_frame.columnconfigure(1, weight=1)
+        self.button_frame.rowconfigure(1, weight=1)
+
+
+
         #ボタン配置枠
         # 動画のロード
         self.load_button = tk.Button(self.button_frame, text=u'load', width=10)
-        self.load_button.pack()
+        self.load_button.pack(expand=1)
         #ボタン配置枠
         # 再生ボタン
         self.play_button = tk.Button(self.button_frame, text=u'▶', width=10)
-        self.play_button.pack()   
+        self.play_button.pack(expand=True)   
         #ボタン配置枠
         # 停止ボタン
         self.stop_button = tk.Button(self.button_frame, text=u'■', width=10)
@@ -156,6 +173,7 @@ class View(object):
         self.back_1_frame_button = tk.Button(self.button_frame, text=u'<<', width=10)
         self.back_1_frame_button.pack()
     
+
     def draw_image(self):
 
         image = self.model.get_image()
@@ -278,6 +296,10 @@ class Controller(object):
             #スケールバーの最終フレームを取得する
             self.view.scale_bar.config(to=self.model.get_frame_count())
 
+            #print(self.view.movie_frame.winfo_width())
+            #print(self.view.canvas.winfo_width())
+            print(self.view.master.winfo_width())
+
             fps = self.model.get_fps()
             self.frame_timer = int(1 / fps * 1000 + 0.5)
 
@@ -364,6 +386,11 @@ class Controller(object):
             )
         #描画を行う
         self.view.draw_image()
+
+
+    def callback(self, event):
+        self.view.canvas_height = self.view.master.winfo_width()
+        print(self.view.canvas_height)
 
     def test_1(self):
         self.i = self.i + 1
