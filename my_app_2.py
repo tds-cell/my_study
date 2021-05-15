@@ -123,7 +123,6 @@ class View(object):
             self.movie_frame
             ,orient="h"
             ,from_=0
-            #,to=self.model.get_frame_count()
             ,variable=self.slide_num
         )
         self.scale_bar.pack(fill=tk.X, anchor=tk.SW)
@@ -198,9 +197,14 @@ class Controller(object):
         #再生中はTrue, 停止中はFalse
         self.playing = False
 
+        self.job_frame = None
         self.frame_timer = 10
 
+        self.job_draw = None
         self.draw_timer = 50
+
+        #確認用。完成したら消す
+        self.i = 0
 
         self.set_events()
         
@@ -214,7 +218,7 @@ class Controller(object):
        
     def draw(self):
 
-        self.master.after(self.draw_timer, self.draw)
+        self.job_draw = self.master.after(self.draw_timer, self.draw)
 
         if self.playing:
             self.model.create_image(
@@ -227,7 +231,7 @@ class Controller(object):
     
     def frame(self):
 
-        self.master.after(self.frame_timer, self.frame)
+        self.job_frame = self.master.after(self.frame_timer, self.frame)
 
         if self.playing:
             ret = self.model.advance_frame()
@@ -238,6 +242,14 @@ class Controller(object):
 
     #動画読み込み用関数
     def push_load_button(self):
+
+        self.playing = False
+
+        if self.job_frame is not None:
+            self.master.after_cancel(self.job_frame)
+
+        if self.job_frame is not None:
+            self.master.after_cancel(self.job_draw)
 
         file_types = [
             ("MP4 file", "*.mp4"),
@@ -275,7 +287,6 @@ class Controller(object):
 
     #動画再生用関数
     def play_button(self):
-
 
         if not self.playing:
             self.playing = True
@@ -354,6 +365,9 @@ class Controller(object):
         #描画を行う
         self.view.draw_image()
 
+    def test_1(self):
+        self.i = self.i + 1
+        print(self.i)
 
 #メインフレームの作成
 main_frame = tk.Tk()
