@@ -6,3 +6,8 @@ test.py
 /original_movies
 #my_app.puは無視する
 my_app.py
+
+#無視するファイルの追加
+#2021.05.15
+new_my_app.py
+test_1.py
